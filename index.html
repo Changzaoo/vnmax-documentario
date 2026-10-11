@@ -43,11 +43,13 @@ footer a{color:var(--btc)}
 <script>
 (function () {
   var v = document.getElementById("v"), lista = document.getElementById("lista"), agora = document.getElementById("agora");
-  var caps = [], atual = 0;
+  var caps = [], atual = 0, ver = "";
   function mmss(s) { s = Math.round(s); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); }
   function toca(i, auto) {
     atual = i; var c = caps[i];
-    v.src = c.arquivo; v.poster = c.capa;
+    /* o arquivo mantém o nome quando o filme é refeito: a versão vai na URL
+       para o navegador não tocar o vídeo velho que ficou no cache */
+    v.src = c.arquivo + ver; v.poster = c.capa + ver;
     agora.innerHTML = "Capítulo " + c.romano + " · <b>" + c.titulo + "</b> · " + c.momentos + " momentos · " + mmss(c.duracao);
     [].forEach.call(lista.querySelectorAll("button"), function (b, k) { b.setAttribute("aria-current", String(k === i)); });
     if (auto) v.play().catch(function () {});
@@ -55,10 +57,11 @@ footer a{color:var(--btc)}
   v.addEventListener("ended", function () { if (atual + 1 < caps.length) toca(atual + 1, true); });
   fetch("indice.json", { cache: "no-cache" }).then(function (r) { return r.json(); }).then(function (d) {
     caps = d.capitulos || [];
+    ver = "?v=" + (d.atualizado || 0);
     caps.forEach(function (c, i) {
       var b = document.createElement("button");
       b.type = "button";
-      b.innerHTML = '<img loading="lazy" alt="" src="' + c.capa + '"><div><strong>' + c.romano + " · " + c.titulo + "</strong><span>" + c.de + "–" + (i === caps.length - 1 ? "hoje" : c.ate) + " · " + mmss(c.duracao) + "</span></div>";
+      b.innerHTML = '<img loading="lazy" alt="" src="' + c.capa + ver + '"><div><strong>' + c.romano + " · " + c.titulo + "</strong><span>" + c.de + "–" + (i === caps.length - 1 ? "hoje" : c.ate) + " · " + mmss(c.duracao) + "</span></div>";
       b.addEventListener("click", function () { toca(i, true); });
       var li = document.createElement("li"); li.appendChild(b); lista.appendChild(li);
     });
